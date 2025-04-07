@@ -6,7 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import HomeScreen from '../screens/Home/HomeScreen';
 import ScheduleScreen from '../screens/Schedule/ScheduleScreen';
 import NotificationScreen from '../screens/Notification/NotificationScreen';
-import MessageScreen from '../screens/Messages/MessageScreen';
+import MessageListScreen from '../screens/Messages/MessageListScreen';
 import ProfileScreen from '../screens/Profile/ProfileScreen';
 
 const Tab = createBottomTabNavigator();
@@ -54,7 +54,7 @@ const TabNavigator = () => {
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Schedule" component={ScheduleScreen} />
       <Tab.Screen name="Notifications" component={NotificationScreen} />
-      <Tab.Screen name="Messages" component={MessageScreen} />
+      <Tab.Screen name="Messages" component={MessageListScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
   );

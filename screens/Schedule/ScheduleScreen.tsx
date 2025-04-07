@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
+import JobCard from '../../components/Schedule/JobCard';
 
 const scheduleData = [
   {
@@ -70,18 +71,13 @@ const ScheduleScreen = () => {
             <Text style={styles.date}>{day.date}</Text>
 
             {day.entries.map((entry, idx) => (
-              <TouchableOpacity key={idx} onPress={handlePressJob}>
-                <View style={styles.card}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.entryTitle}>{entry.title}</Text>
-                    <Text style={styles.hours}>{entry.hours}</Text>
-                  </View>
-                  <View style={{ alignItems: 'flex-end' }}>
-                    <Text style={styles.clockLabel}>Clock in & Out</Text>
-                    <Text style={styles.clockTime}>{entry.clock}</Text>
-                  </View>
-                </View>
-              </TouchableOpacity>
+              <JobCard
+                key={idx}
+                title={entry.title}
+                hours={entry.hours}
+                clock={entry.clock}
+                onPress={handlePressJob}
+              />
             ))}
           </View>
         ))}
