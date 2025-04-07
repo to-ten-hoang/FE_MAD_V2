@@ -20,7 +20,7 @@ const mockJobs = [
     location: 'California, USA',
     salary: '$15K/Mo',
     tags: ['Design', 'Full time', 'Senior designer'],
-    logo: require('../assets/images/google.png'),
+    logo: require('../../assets/images/google.png'),
   },
   {
     id: '2',
@@ -29,7 +29,7 @@ const mockJobs = [
     location: 'California, USA',
     salary: '$20K/Mo',
     tags: ['Design', 'Full time', 'Senior designer'],
-    logo: require('../assets/images/dribbble.png'),
+    logo: require('../../assets/images/dribbble.png'),
   },
   {
     id: '3',
@@ -38,7 +38,7 @@ const mockJobs = [
     location: 'California, USA',
     salary: '$12K/Mo',
     tags: ['Design', 'Full time', 'Senior designer'],
-    logo: require('../assets/images/twitter.png'),
+    logo: require('../../assets/images/twitter.png'),
   },
 ];
 
@@ -66,7 +66,7 @@ const SearchScreen = () => {
           />
           <TouchableOpacity style={styles.filterBtn}>
             <Image
-              source={require('../assets/images/icon_filter.png')}
+              source={require('../../assets/images/icon_filter.png')}
               style={{ width: 24, height: 24 }}
             />
           </TouchableOpacity>

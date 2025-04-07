@@ -11,13 +11,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../navigation/AppNavigator';
+import { RootStackParamList } from '../../navigation/AppNavigator';
 
-import bannerImg from '../assets/images/banner.png';
-import avatarImg from '../assets/images/avatar.jpg';
-import appleLogo from '../assets/images/company_apple.png';
-import searchIcon from '../assets/images/icon_search.png';
-import filterIcon from '../assets/images/icon_filter.png';
+import bannerImg from '../../assets/images/banner.png';
+import avatarImg from '../../assets/images/avatar.jpg';
+import appleLogo from '../../assets/images/company_apple.png';
+import searchIcon from '../../assets/images/icon_search.png';
+import filterIcon from '../../assets/images/icon_filter.png';
 
 const HomeScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();

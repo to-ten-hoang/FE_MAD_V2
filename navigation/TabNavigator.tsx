@@ -1,11 +1,13 @@
+// src/navigation/TabNavigator.tsx
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import HomeScreen from '../screens/HomeScreen';
-import ScheduleScreen from '../screens/ScheduleScreen';
-import NotificationScreen from '../screens/NotificationScreen';
-import MessageScreen from '../screens/MessageScreen';
-import ProfileScreen from '../screens/ProfileScreen';
 import { Ionicons } from '@expo/vector-icons';
+
+import HomeScreen from '../screens/Home/HomeScreen';
+import ScheduleScreen from '../screens/Schedule/ScheduleScreen';
+import NotificationScreen from '../screens/Notification/NotificationScreen';
+import MessageScreen from '../screens/Messages/MessageScreen';
+import ProfileScreen from '../screens/Profile/ProfileScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -14,7 +16,7 @@ const TabNavigator = () => {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         tabBarIcon: ({ color, size }) => {
-          let iconName: string = '';
+          let iconName = '';
 
           switch (route.name) {
             case 'Home':
@@ -36,7 +38,17 @@ const TabNavigator = () => {
 
           return <Ionicons name={iconName as any} size={size} color={color} />;
         },
+        tabBarActiveTintColor: '#341f97',
+        tabBarInactiveTintColor: '#888',
         headerShown: false,
+        tabBarStyle: {
+          height: 60,
+          paddingBottom: 6,
+          paddingTop: 6,
+        },
+        tabBarLabelStyle: {
+          fontSize: 12,
+        },
       })}
     >
       <Tab.Screen name="Home" component={HomeScreen} />
