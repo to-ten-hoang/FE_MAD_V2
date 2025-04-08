@@ -11,6 +11,8 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import JobCard from '../../components/Common/JobCard';
+
 
 const mockJobs = [
   {
@@ -77,22 +79,17 @@ const SearchScreen = () => {
           data={filtered}
           keyExtractor={item => item.id}
           renderItem={({ item }) => (
-            <View style={styles.card}>
-              <Image source={item.logo} style={styles.logo} />
-              <View style={{ flex: 1 }}>
-                <Text style={styles.title}>{item.title}</Text>
-                <Text>{item.company} - {item.location}</Text>
-                <View style={styles.tags}>
-                  {item.tags.map((tag, i) => (
-                    <Text key={i} style={styles.tag}>{tag}</Text>
-                  ))}
-                </View>
-                <Text style={styles.salary}>{item.salary}</Text>
-              </View>
-              <Ionicons name="ellipsis-vertical" size={20} color="#999" />
-            </View>
+            <JobCard
+              title={item.title}
+              company={item.company}
+              location={item.location}
+              salary={item.salary.replace('/Mo', '')} // gọt /Mo để tránh lỗi
+              tags={item.tags}
+              logo={item.logo}
+              onPress={() => navigation.navigate('JobDetail')} // <-- Thêm dòng này
+            />
           )}
-        />
+/>
       </View>
     </SafeAreaView>
   );

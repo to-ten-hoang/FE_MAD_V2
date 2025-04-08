@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/AppNavigator';
+import JobCard from '../../components/Common/JobCard';
 
 import bannerImg from '../../assets/images/banner.png';
 import avatarImg from '../../assets/images/avatar.jpg';
@@ -65,20 +66,18 @@ const HomeScreen = () => {
         <Text style={styles.section}>Danh sách công việc gần đây</Text>
 
         {[1, 2].map((_, idx) => (
-          <View key={idx} style={styles.jobCard}>
-            <Image source={appleLogo} style={styles.logo} />
-            <View style={{ flex: 1 }}>
-              <Text style={styles.jobTitle}>Product Designer</Text>
-              <Text>Google inc - California, USA</Text>
-              <Text style={styles.salary}>$15K/Mo</Text>
-              <View style={styles.tags}>
-                <Text style={styles.tag}>Thực tập designer</Text>
-                <Text style={styles.tag}>Bán thời gian</Text>
-                <Text style={styles.tagApply}>Ứng tuyển</Text>
-              </View>
-            </View>
-          </View>
+          <JobCard
+            key={`job-${idx}`}
+            title="Product Designer"
+            company="Google inc"
+            location="California, USA"
+            salary="$15K"
+            tags={['Thực tập designer', 'Bán thời gian', 'Ứng tuyển']}
+            logo={appleLogo}
+            onPress={() => navigation.navigate('JobDetail')} // <-- Thêm dòng này
+          />
         ))}
+
       </ScrollView>
     </SafeAreaView>
   );
