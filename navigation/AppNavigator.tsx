@@ -3,13 +3,13 @@ import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import TabNavigator from './TabNavigator';
 import SearchScreen from '@screens/Search/SearchScreen';
-import JobDetailScreen from '@screens/Schedule/JobDetailScreen';
+import JobDetailSchedule from '@screens/Schedule/JobDetailSchedule';
 import ChatDetailScreen from '@screens/Messages/ChatDetailScreen';
 
 export type RootStackParamList = {
   Tabs: undefined;
   Search: undefined;
-  JobDetail: undefined;
+  JobDetailSchedule: undefined;
   ChatDetail: undefined;
 };
 
@@ -20,7 +20,7 @@ const AppNavigator = () => {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Tabs" component={TabNavigator} />
       <Stack.Screen name="Search" component={SearchScreen} />
-      <Stack.Screen name="JobDetail" component={JobDetailScreen} />
+      <Stack.Screen name="JobDetailSchedule" component={JobDetailSchedule} />
       <Stack.Screen name="ChatDetail" component={ChatDetailScreen} />
     </Stack.Navigator>
   );

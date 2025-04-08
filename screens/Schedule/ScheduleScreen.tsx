@@ -44,7 +44,7 @@ const ScheduleScreen = () => {
 
   const handlePressJob = () => {
     // 👇 Điều hướng sang màn chi tiết công việc sau này
-    navigation.navigate('JobDetail' as never);
+    navigation.navigate('JobDetailSchedule' as never);
   };
 
   return (
