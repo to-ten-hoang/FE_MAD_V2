@@ -5,7 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/AppNavigator';
 import { login } from '../../api/authApi';
-import { storeToken, storeUserId } from '../../utils/storage';
+import { storeToken, storeUserId, removeToken } from '../../utils/storage';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Login'>;
 
@@ -25,6 +25,8 @@ const LoginScreen = () => {
 
     setLoading(true);
     try {
+      // Xóa token cũ trước khi đăng nhập
+      await removeToken();
       const response = await login(email, password);
       if (response.status === 'success') {
         const role = response.data.role;
