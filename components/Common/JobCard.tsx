@@ -33,7 +33,7 @@ const JobCard: React.FC<JobCardProps> = ({
           <Text style={styles.title}>{title}</Text>
           <Text style={styles.subtitle}>{company} ・{location}</Text>
         </View>
-        <Ionicons name="ellipsis-vertical" size={20} color="#999" />
+        {/* <Ionicons name="ellipsis-vertical" size={20} color="#999" /> */}
       </View>
 
       {/* Salary */}

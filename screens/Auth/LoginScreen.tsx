@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Alert, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/AppNavigator';
 import { login } from '../../api/authApi';
-import { storeToken, storeUserId, removeToken } from '../../utils/storage';
+import { storeToken, storeUserId } from '../../utils/storage';
+import { useUserStore } from '../../stores/userStore';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Login'>;
 
@@ -16,6 +17,8 @@ const LoginScreen = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [loadingProfile, setLoadingProfile] = useState(false); // Thêm loading cho setUser
+  const setUser = useUserStore((state) => state.setUser);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -25,19 +28,18 @@ const LoginScreen = () => {
 
     setLoading(true);
     try {
-      // Xóa token cũ trước khi đăng nhập
-      await removeToken();
       const response = await login(email, password);
-      if (response.status === 'success') {
-        const role = response.data.role;
-        if (role !== 'JOB_SEEKER') {
-          Alert.alert('Lỗi', 'Vui lòng sử dụng tài khoản người tìm việc');
-          return;
-        }
+      if (response.message === 'Login successful') {
         const token = response.data.token;
         const userId = response.data.id;
+
         await storeToken(token);
         await storeUserId(userId);
+
+        setLoadingProfile(true); // Bắt đầu loading khi gọi setUser
+        await setUser(userId);
+        setLoadingProfile(false); // Kết thúc loading
+
         navigation.replace('Tabs');
       } else {
         Alert.alert('Lỗi', response.message || 'Đăng nhập thất bại');
@@ -47,12 +49,12 @@ const LoginScreen = () => {
       Alert.alert('Lỗi', message);
     } finally {
       setLoading(false);
+      setLoadingProfile(false); // Đảm bảo loading tắt nếu có lỗi
     }
   };
 
   return (
     <View style={styles.container}>
-      {/* Logo và tiêu đề */}
       <View style={styles.header}>
         <Image
           source={require('../../assets/images/logo.png')}
@@ -63,7 +65,6 @@ const LoginScreen = () => {
         <Text style={styles.subtitle}>Chào mừng bạn đến với JobSpot</Text>
       </View>
 
-      {/* Trường nhập Email */}
       <View style={styles.inputContainer}>
         <Text style={styles.label}>Email</Text>
         <TextInput
@@ -76,7 +77,6 @@ const LoginScreen = () => {
         />
       </View>
 
-      {/* Trường nhập Mật khẩu */}
       <View style={styles.inputContainer}>
         <Text style={styles.label}>Nhập mật khẩu</Text>
         <View style={styles.passwordContainer}>
@@ -98,7 +98,6 @@ const LoginScreen = () => {
         </View>
       </View>
 
-      {/* Ghi nhớ đăng nhập và Quên mật khẩu */}
       <View style={styles.optionsContainer}>
         <TouchableOpacity
           style={styles.checkboxContainer}
@@ -112,16 +111,18 @@ const LoginScreen = () => {
         </TouchableOpacity>
       </View>
 
-      {/* Nút Đăng nhập */}
       <TouchableOpacity
-        style={[styles.loginButton, loading && styles.buttonDisabled]}
+        style={[styles.loginButton, (loading || loadingProfile) && styles.buttonDisabled]}
         onPress={handleLogin}
-        disabled={loading}
+        disabled={loading || loadingProfile}
       >
-        <Text style={styles.loginButtonText}>ĐĂNG NHẬP</Text>
+        {(loading || loadingProfile) ? (
+          <ActivityIndicator size="small" color="#fff" />
+        ) : (
+          <Text style={styles.loginButtonText}>ĐĂNG NHẬP</Text>
+        )}
       </TouchableOpacity>
 
-      {/* Liên kết Đăng ký */}
       <View style={styles.registerContainer}>
         <Text style={styles.registerText}>Bạn chưa có tài khoản? </Text>
         <TouchableOpacity onPress={() => navigation.navigate('Register')}>

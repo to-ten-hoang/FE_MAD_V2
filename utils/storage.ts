@@ -24,7 +24,7 @@ export const getToken = async () => {
 export const removeToken = async () => {
   try {
     await AsyncStorage.removeItem('userToken');
-    await AsyncStorage.removeItem('userId'); // Xóa userId khi đăng xuất
+    await AsyncStorage.removeItem('userId');
   } catch (error) {
     console.error('Error removing token:', error);
   }

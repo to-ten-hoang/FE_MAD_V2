@@ -3,20 +3,18 @@ import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/AppNavigator';
-import { removeToken } from '../../utils/storage';
+import { useUserStore } from '../../stores/userStore';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Profile'>;
 
 const LogoutModal = ({ onClose }: { onClose: () => void }) => {
   const navigation = useNavigation<NavigationProp>();
+  const clearUser = useUserStore((state) => state.clearUser);
 
   const handleLogout = async () => {
     try {
-      // Xóa token khỏi AsyncStorage
-      await removeToken();
-      // Đóng modal
+      await clearUser();
       onClose();
-      // Điều hướng về màn hình đăng nhập
       navigation.reset({
         index: 0,
         routes: [{ name: 'Login' }],

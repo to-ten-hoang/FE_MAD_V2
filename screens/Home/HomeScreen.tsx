@@ -1,18 +1,22 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react'; // Thêm useState vào import
 import {
   View,
   Text,
   StyleSheet,
   Image,
   TouchableOpacity,
-  ScrollView
+  ScrollView,
+  ActivityIndicator,
+  RefreshControl,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/AppNavigator';
 import JobCard from '../../components/Common/JobCard';
+import { useUserStore } from '../../stores/userStore';
+import { useJobStore } from '../../stores/jobStore';
 
 import bannerImg from '../../assets/images/banner.png';
 import avatarImg from '../../assets/images/avatar.jpg';
@@ -22,6 +26,29 @@ import filterIcon from '../../assets/images/icon_filter.png';
 
 const HomeScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { fullName, isAuthenticated, clearUser } = useUserStore();
+  const { jobs, loading, error, fetchJobs } = useJobStore();
+  const [refreshing, setRefreshing] = useState(false); // Đảm bảo useState hoạt động
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      clearUser();
+      navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+      return;
+    }
+    fetchJobs();
+  }, [isAuthenticated, navigation, clearUser, fetchJobs]);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await fetchJobs();
+    } catch (error) {
+      // Lỗi đã được xử lý trong store
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const handleSearchFocus = () => {
     navigation.navigate('Search');
@@ -29,17 +56,20 @@ const HomeScreen = () => {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
-      <ScrollView style={styles.container}>
-        {/* Header */}
+      <ScrollView
+        style={styles.container}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#341f97" />
+        }
+      >
         <View style={styles.header}>
           <View>
             <Text style={styles.hello}>Hello</Text>
-            <Text style={styles.name}>Huy Hoàng.</Text>
+            <Text style={styles.name}>{fullName || 'User'}.</Text>
           </View>
           <Image source={avatarImg} style={styles.avatar} />
         </View>
 
-        {/* Banner */}
         <View style={styles.banner}>
           <View style={styles.bannerText}>
             <Text style={styles.discount}>50% off</Text>
@@ -51,7 +81,6 @@ const HomeScreen = () => {
           <Image source={bannerImg} style={styles.bannerImg} />
         </View>
 
-        {/* Search */}
         <View style={styles.searchContainer}>
           <TouchableOpacity style={styles.searchBox} onPress={handleSearchFocus}>
             <Image source={searchIcon} style={styles.icon} />
@@ -62,22 +91,28 @@ const HomeScreen = () => {
           </TouchableOpacity>
         </View>
 
-        {/* Job List */}
         <Text style={styles.section}>Danh sách công việc gần đây</Text>
 
-        {[1, 2].map((_, idx) => (
-          <JobCard
-            key={`job-${idx}`}
-            title="Product Designer"
-            company="Google inc"
-            location="California, USA"
-            salary="$15K"
-            tags={['Thực tập designer', 'Bán thời gian', 'Ứng tuyển']}
-            logo={appleLogo}
-            onPress={() => navigation.navigate('JobDetail')} // <-- Thêm dòng này
-          />
-        ))}
-
+        {loading ? (
+          <ActivityIndicator size="large" color="#341f97" />
+        ) : error ? (
+          <Text style={styles.noJobs}>{error}</Text>
+        ) : jobs.length === 0 ? (
+          <Text style={styles.noJobs}>Không có công việc nào để hiển thị.</Text>
+        ) : (
+          jobs.map((job) => (
+            <JobCard
+              key={`job-${job.id}`} // Sửa lỗi cú pháp, dùng backtick và ${}
+              title={job.title}
+              company={job.recruiter}
+              location={job.location}
+              salary={job.salary}
+              tags={[job.shift, job.active ? 'Đang tuyển' : 'Đã đóng']}
+              logo={appleLogo}
+              onPress={() => navigation.navigate('JobDetail')}
+            />
+          ))
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -89,7 +124,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10
+    marginBottom: 10,
   },
   hello: { fontSize: 22 },
   name: { fontSize: 26, fontWeight: 'bold' },
@@ -99,7 +134,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#341f97',
     borderRadius: 12,
     padding: 20,
-    marginVertical: 20
+    marginVertical: 20,
   },
   bannerText: { flex: 1 },
   discount: { color: '#fff', fontSize: 22, fontWeight: 'bold' },
@@ -108,14 +143,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#ff9f43',
     marginTop: 10,
     padding: 10,
-    borderRadius: 8
+    borderRadius: 8,
   },
   joinText: { color: '#fff', textAlign: 'center' },
   bannerImg: { width: 90, height: 90, borderRadius: 12 },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20
+    marginBottom: 20,
   },
   searchBox: {
     flex: 1,
@@ -124,11 +159,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     flexDirection: 'row',
     alignItems: 'center',
-    height: 40
+    height: 40,
   },
   searchPlaceholder: {
     marginLeft: 8,
-    color: '#888'
+    color: '#888',
   },
   icon: { width: 20, height: 20 },
   iconSmall: { width: 24, height: 24 },
@@ -136,41 +171,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#ff9f43',
     marginLeft: 10,
     padding: 10,
-    borderRadius: 8
+    borderRadius: 8,
   },
   section: {
     marginBottom: 10,
     fontWeight: 'bold',
     fontSize: 16,
-    color: '#000'
+    color: '#000',
   },
-  jobCard: {
-    flexDirection: 'row',
-    backgroundColor: '#f5f6fa',
-    padding: 15,
-    borderRadius: 12,
-    marginBottom: 15
+  noJobs: {
+    textAlign: 'center',
+    color: '#666',
+    marginVertical: 20,
   },
-  logo: { width: 40, height: 40, marginRight: 10 },
-  jobTitle: { fontWeight: 'bold', fontSize: 16 },
-  salary: { marginTop: 2, marginBottom: 5, fontWeight: '500' },
-  tags: { flexDirection: 'row', flexWrap: 'wrap', gap: 5 },
-  tag: {
-    backgroundColor: '#dcdde1',
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    marginRight: 5,
-    fontSize: 12
-  },
-  tagApply: {
-    backgroundColor: '#ffe0dc',
-    color: '#e15a4f',
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    fontSize: 12
-  }
 });
 
 export default HomeScreen;

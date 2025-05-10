@@ -43,3 +43,16 @@ export const getUserProfile = async (userId: number) => {
     throw error;
   }
 };
+
+// Lấy danh sách tất cả công việc
+export const getAllJobs = async () => {
+  try {
+    const token = await getToken();
+    const response = await axios.get(`${BASE_URL}/recruiter/jobs/all`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
