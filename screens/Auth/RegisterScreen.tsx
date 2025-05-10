@@ -4,41 +4,35 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/AppNavigator';
-import { login } from '../../api/authApi';
-import { storeToken, storeUserId } from '../../utils/storage';
+import { register } from '../../api/authApi';
+import { Picker } from '@react-native-picker/picker'; // Import từ thư viện mới
 
-type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Login'>;
+type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Register'>;
 
-const LoginScreen = () => {
+const RegisterScreen = () => {
   const navigation = useNavigation<NavigationProp>();
+  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [role, setRole] = useState('JOB_SEEKER');
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = async () => {
-    if (!email || !password) {
-      Alert.alert('Lỗi', 'Vui lòng nhập email và mật khẩu');
+  const handleRegister = async () => {
+    if (!fullName || !email || !password) {
+      Alert.alert('Lỗi', 'Vui lòng nhập đầy đủ thông tin');
       return;
     }
 
     setLoading(true);
     try {
-      const response = await login(email, password);
-      if (response.status === 'success') {
-        const role = response.data.role;
-        if (role !== 'JOB_SEEKER') {
-          Alert.alert('Lỗi', 'Vui lòng sử dụng tài khoản người tìm việc');
-          return;
-        }
-        const token = response.data.token;
-        const userId = response.data.id;
-        await storeToken(token);
-        await storeUserId(userId);
-        navigation.replace('Tabs');
+      const response = await register(fullName, email, password, role);
+      if (response.success) {
+        Alert.alert('Thành công', response.message || 'Đăng ký thành công', [
+          { text: 'OK', onPress: () => navigation.navigate('Login') },
+        ]);
       } else {
-        Alert.alert('Lỗi', response.message || 'Đăng nhập thất bại');
+        Alert.alert('Lỗi', response.message || 'Đăng ký thất bại');
       }
     } catch (error: any) {
       const message = error.response?.data?.message || 'Đã có lỗi xảy ra. Vui lòng thử lại.';
@@ -58,7 +52,19 @@ const LoginScreen = () => {
           resizeMode="contain"
         />
         <Text style={styles.title}>JobSpot</Text>
-        <Text style={styles.subtitle}>Chào mừng bạn đến với JobSpot</Text>
+        <Text style={styles.subtitle}>Đăng ký tài khoản</Text>
+      </View>
+
+      {/* Trường nhập Tên */}
+      <View style={styles.inputContainer}>
+        <Text style={styles.label}>Tên đầy đủ</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Nhập tên của bạn"
+          value={fullName}
+          onChangeText={setFullName}
+          autoCapitalize="words"
+        />
       </View>
 
       {/* Trường nhập Email */}
@@ -96,34 +102,35 @@ const LoginScreen = () => {
         </View>
       </View>
 
-      {/* Ghi nhớ đăng nhập và Quên mật khẩu */}
-      <View style={styles.optionsContainer}>
-        <TouchableOpacity
-          style={styles.checkboxContainer}
-          onPress={() => setRememberMe(!rememberMe)}
-        >
-          <View style={[styles.checkbox, rememberMe && styles.checkboxChecked]} />
-          <Text style={styles.optionText}>Ghi nhớ đăng nhập</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => Alert.alert('Thông báo', 'Chức năng quên mật khẩu đang phát triển')}>
-          <Text style={styles.forgotPassword}>Quên mật khẩu?</Text>
-        </TouchableOpacity>
+      {/* Chọn vai trò */}
+      <View style={styles.inputContainer}>
+        <Text style={styles.label}>Bạn là</Text>
+        <View style={styles.pickerContainer}>
+          <Picker
+            selectedValue={role}
+            onValueChange={(itemValue) => setRole(itemValue)}
+            style={styles.picker}
+          >
+            <Picker.Item label="Người tìm việc" value="JOB_SEEKER" />
+            <Picker.Item label="Nhà tuyển dụng" value="RECRUITER" />
+          </Picker>
+        </View>
       </View>
 
-      {/* Nút Đăng nhập */}
+      {/* Nút Đăng ký */}
       <TouchableOpacity
-        style={[styles.loginButton, loading && styles.buttonDisabled]}
-        onPress={handleLogin}
+        style={[styles.registerButton, loading && styles.buttonDisabled]}
+        onPress={handleRegister}
         disabled={loading}
       >
-        <Text style={styles.loginButtonText}>ĐĂNG NHẬP</Text>
+        <Text style={styles.registerButtonText}>ĐĂNG KÝ</Text>
       </TouchableOpacity>
 
-      {/* Liên kết Đăng ký */}
-      <View style={styles.registerContainer}>
-        <Text style={styles.registerText}>Bạn chưa có tài khoản? </Text>
-        <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-          <Text style={styles.registerLink}>Đăng ký ngay</Text>
+      {/* Liên kết Đăng nhập */}
+      <View style={styles.loginContainer}>
+        <Text style={styles.loginText}>Đã có tài khoản? </Text>
+        <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+          <Text style={styles.loginLink}>Đăng nhập ngay</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -181,37 +188,17 @@ const styles = StyleSheet.create({
     right: 15,
     top: 15,
   },
-  optionsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 30,
-  },
-  checkboxContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  checkbox: {
-    width: 20,
-    height: 20,
+  pickerContainer: {
     borderWidth: 1,
     borderColor: '#ddd',
-    borderRadius: 4,
-    marginRight: 8,
+    borderRadius: 8,
+    backgroundColor: '#f5f6fa',
   },
-  checkboxChecked: {
-    backgroundColor: '#341f97',
-    borderColor: '#341f97',
+  picker: {
+    height: 50,
+    width: '100%',
   },
-  optionText: {
-    fontSize: 14,
-    color: '#666',
-  },
-  forgotPassword: {
-    fontSize: 14,
-    color: '#341f97',
-  },
-  loginButton: {
+  registerButton: {
     backgroundColor: '#341f97',
     paddingVertical: 14,
     borderRadius: 8,
@@ -221,24 +208,24 @@ const styles = StyleSheet.create({
   buttonDisabled: {
     opacity: 0.6,
   },
-  loginButtonText: {
+  registerButtonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
   },
-  registerContainer: {
+  loginContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
   },
-  registerText: {
+  loginText: {
     fontSize: 14,
     color: '#666',
   },
-  registerLink: {
+  loginLink: {
     fontSize: 14,
     color: '#f39c12',
     fontWeight: 'bold',
   },
 });
 
-export default LoginScreen;
+export default RegisterScreen;

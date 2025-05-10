@@ -16,6 +16,21 @@ export const login = async (email: string, password: string) => {
   }
 };
 
+// Đăng ký
+export const register = async (fullName: string, email: string, password: string, role: string) => {
+  try {
+    const response = await axios.post(`${BASE_URL}/auth/register`, {
+      fullName,
+      email,
+      password,
+      role,
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
 // Lấy thông tin hồ sơ người dùng
 export const getUserProfile = async (userId: number) => {
   try {

@@ -10,8 +10,9 @@ import ApplySuccessScreen from '../screens/JobDetail/ApplySuccessScreen';
 import ProfileScreen from '../screens/Profile/ProfileScreen';
 import EditProfileScreen from '../screens/Profile/EditProfileScreen';
 import NotificationSettingsScreen from '../screens/Profile/NotificationSettingsScreen';
-import LoginScreen from '../screens/Auth/LoginScreen'; // Thêm màn hình đăng nhập
-import { getToken } from '../utils/storage';
+import LoginScreen from '../screens/Auth/LoginScreen';
+import RegisterScreen from '../screens/Auth/RegisterScreen';
+import { getToken } from '../utils/storage'; // Thêm import
 
 export type RootStackParamList = {
   Tabs: undefined;
@@ -25,7 +26,7 @@ export type RootStackParamList = {
   EditProfile: undefined;
   NotificationSettings: undefined;
   Login: undefined;
-  Register: undefined; // Để sẵn cho màn hình đăng ký sau này
+  Register: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -37,9 +38,9 @@ const AppNavigator = () => {
     const checkToken = async () => {
       const token = await getToken();
       if (token) {
-        setInitialRoute('Tabs'); // Nếu đã có token, vào thẳng Tabs
+        setInitialRoute('Tabs');
       } else {
-        setInitialRoute('Login'); // Nếu không có token, vào màn hình đăng nhập
+        setInitialRoute('Login');
       }
     };
     checkToken();
@@ -52,6 +53,7 @@ const AppNavigator = () => {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName={initialRoute}>
       <Stack.Screen name="Login" component={LoginScreen} />
+      <Stack.Screen name="Register" component={RegisterScreen} />
       <Stack.Screen name="Tabs" component={TabNavigator} />
       <Stack.Screen name="Search" component={SearchScreen} />
       <Stack.Screen name="JobDetailSchedule" component={JobDetailSchedule} />
