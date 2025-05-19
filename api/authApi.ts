@@ -44,6 +44,19 @@ export const getUserProfile = async (userId: number) => {
   }
 };
 
+// Cập nhật thông tin hồ sơ người dùng
+export const updateUserProfile = async (userId: number, profileData: any) => {
+  try {
+    const token = await getToken();
+    const response = await axios.put(`${BASE_URL}/auth/profile/${userId}`, profileData, {
+      headers: { Authorization: `Bearer ${token}`, 'accept': '*/*' },
+    });
+    return response.data.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
 // Lấy danh sách tất cả công việc
 export const getAllJobs = async () => {
   try {
@@ -64,12 +77,13 @@ export const getJobDetail = async (jobId: string) => {
     const response = await axios.get(`${BASE_URL}/recruiter/job/${jobId}`, {
       headers: { Authorization: `Bearer ${token}`, 'accept': '*/*' },
     });
-    return response.data.data;
+    return response.data;
   } catch (error) {
     throw error;
   }
 };
 
+// Ứng tuyển công việc
 export const applyJob = async (jobSeekerId: number, jobPostingId: number) => {
   try {
     const token = await getToken();
@@ -82,6 +96,19 @@ export const applyJob = async (jobSeekerId: number, jobPostingId: number) => {
       }
     );
     return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Lấy lịch làm việc của người tìm việc
+export const getSeekerSchedule = async (seekerId: number) => {
+  try {
+    const token = await getToken();
+    const response = await axios.get(`${BASE_URL}/seeker/schedule/${seekerId}`, {
+      headers: { Authorization: `Bearer ${token}`, 'accept': '*/*' },
+    });
+    return response.data.data;
   } catch (error) {
     throw error;
   }
