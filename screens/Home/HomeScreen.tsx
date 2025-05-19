@@ -90,9 +90,9 @@ const HomeScreen = () => {
             <Image source={searchIcon} style={styles.icon} />
             <Text style={styles.searchPlaceholder}>Tìm kiếm</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.filterButton}>
+          {/* <TouchableOpacity style={styles.filterButton}>
             <Image source={filterIcon} style={styles.iconSmall} />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
 
         <Text style={styles.section}>Danh sách công việc gần đây</Text>

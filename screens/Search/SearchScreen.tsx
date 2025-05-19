@@ -66,12 +66,12 @@ const SearchScreen = () => {
             onChangeText={setSearch}
             style={styles.input}
           />
-          <TouchableOpacity style={styles.filterBtn}>
+          {/* <TouchableOpacity style={styles.filterBtn}>
             <Image
               source={require('../../assets/images/icon_filter.png')}
               style={{ width: 24, height: 24 }}
             />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
 
         {/* Result list */}

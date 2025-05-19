@@ -4,6 +4,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 import * as DocumentPicker from 'expo-document-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useUserStore } from '../../stores/userStore';
@@ -11,6 +12,7 @@ import SectionTitle from '../../components/Profile/SectionTitle';
 import CVUpload from '../../components/Profile/CVUpload';
 
 const EditProfileScreen = () => {
+  const navigation = useNavigation();
   const {
     userId,
     fullName,
@@ -82,7 +84,9 @@ const EditProfileScreen = () => {
 
     try {
       await updateUserProfile(profileData);
-      Alert.alert('Thành công', 'Cập nhật thông tin cá nhân thành công.');
+      Alert.alert('Thành công', 'Cập nhật thông tin cá nhân thành công.', [
+        { text: 'OK', onPress: () => navigation.goBack() },
+      ]);
     } catch (err: any) {
       Alert.alert('Lỗi', err.message || 'Cập nhật thông tin thất bại.');
     }
@@ -90,7 +94,7 @@ const EditProfileScreen = () => {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.safeArea}>
         <ActivityIndicator size="large" color="#1e0eff" />
       </SafeAreaView>
     );
@@ -98,24 +102,38 @@ const EditProfileScreen = () => {
 
   if (error) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.safeArea}>
         <Text style={styles.errorText}>{error}</Text>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
-      <ScrollView style={styles.container}>
-        <View style={styles.header}>
-          <Image
-            source={userProfilePicture ? { uri: userProfilePicture } : require('../../assets/images/avatar.jpg')}
-            style={styles.avatar}
-          />
-          <Text style={styles.name}>{name}</Text>
-          <TouchableOpacity onPress={() => handlePickFile('profilePicture')}>
-            <Text style={styles.changePhoto}>Thay đổi ảnh</Text>
-          </TouchableOpacity>
+    <SafeAreaView style={styles.safeArea}>
+      {/* Header với nút quay lại */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={24} color="#000" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Chỉnh sửa hồ sơ</Text>
+      </View>
+
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.section}>
+          <View style={styles.avatarContainer}>
+            <Image
+              source={userProfilePicture ? { uri: userProfilePicture } : require('../../assets/images/avatar.jpg')}
+              style={styles.avatar}
+            />
+            <Text style={styles.name}>{name}</Text>
+            <TouchableOpacity onPress={() => handlePickFile('profilePicture')}>
+              <Text style={styles.changePhoto}>Thay đổi ảnh</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         <View style={styles.section}>
@@ -196,13 +214,54 @@ const Field = ({ label, value, onChangeText, editable = true, multiline = false 
 );
 
 const styles = StyleSheet.create({
-  container: { padding: 20 },
-  header: { alignItems: 'center', marginBottom: 20 },
-  avatar: { width: 80, height: 80, borderRadius: 40 },
-  name: { marginTop: 10, fontSize: 18, fontWeight: 'bold' },
-  changePhoto: { color: '#6c47ff', marginTop: 5 },
-  section: { marginBottom: 24 },
-  fieldLabel: { marginBottom: 6, color: '#555' },
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginLeft: 12,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: 20,
+    paddingBottom: 40,
+  },
+  section: {
+    marginBottom: 24,
+  },
+  avatarContainer: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  avatar: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+  },
+  name: {
+    marginTop: 10,
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  changePhoto: {
+    color: '#6c47ff',
+    marginTop: 5,
+  },
+  fieldLabel: {
+    marginBottom: 6,
+    color: '#555',
+  },
   input: {
     borderWidth: 1,
     borderColor: '#ccc',

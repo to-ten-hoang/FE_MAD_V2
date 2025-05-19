@@ -1,18 +1,49 @@
-// JobDetailSchedule.tsx
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { useJobStore } from '../../stores/jobStore';
 
-import DetailTab from '../../components/Schedule/DetailTab';
-import ShiftChangeTab from '../../components/Schedule/ShiftChangeTab';
-import CheckinTab from '../../components/Schedule/CheckinTab';
-import HeaderCard from '../../components/Schedule/HeaderCard';
+type RouteParams = {
+  jobPostingId: number;
+  startTime: string;
+  endTime: string;
+};
 
 const JobDetailSchedule = () => {
-  const [activeTab, setActiveTab] = useState<'Chi tiết' | 'Xin nghỉ' | 'Chấm công'>('Chi tiết');
   const navigation = useNavigation();
+  const { params } = useRoute();
+  const { jobPostingId, startTime, endTime } = params as RouteParams;
+  const { selectedJob, loading, error, fetchJobDetail } = useJobStore();
+
+  useEffect(() => {
+    fetchJobDetail(jobPostingId.toString());
+  }, [jobPostingId, fetchJobDetail]);
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <ActivityIndicator size="large" color="#6C47FF" />
+      </SafeAreaView>
+    );
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <Text style={styles.errorText}>{error}</Text>
+      </SafeAreaView>
+    );
+  }
+
+  if (!selectedJob) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <Text style={styles.errorText}>No job data available</Text>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -26,36 +57,62 @@ const JobDetailSchedule = () => {
         </View>
 
         <View style={styles.headerCardWrapper}>
-          <HeaderCard
-            date="27 September 2025"
-            title="Name Job 1"
-            hours="08:00:00 hrs"
-            clock="09:00 AM — 05:00 PM"
-          />
+          <View style={styles.headerCard}>
+            <Text style={styles.headerTitleJob}>{selectedJob.title}</Text>
+            <Text style={styles.headerSubtitle}>
+              {selectedJob.recruiter}  ・  {selectedJob.location}
+            </Text>
+            <Text style={styles.headerClock}>
+              {new Date(startTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: true })} —{' '}
+              {new Date(endTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: true })}
+            </Text>
+          </View>
         </View>
       </View>
 
-      {/* Tabs + Nội dung */}
+      {/* Nội dung chi tiết */}
       <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-        <View style={styles.tabsWrapper}>
-          <View style={styles.tabs}>
-            {['Chi tiết', 'Xin nghỉ', 'Chấm công'].map((tab) => (
-              <TouchableOpacity
-                key={tab}
-                onPress={() => setActiveTab(tab as any)}
-                style={[styles.tabItem, activeTab === tab && styles.tabActive]}
-              >
-                <Text style={activeTab === tab ? styles.tabTextActive : styles.tabText}>{tab}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+        <Text style={styles.sectionTitle}>Mô tả công việc</Text>
+        <Text style={styles.paragraph}>{selectedJob.description || 'Không có mô tả'}</Text>
+
+        <Text style={styles.sectionTitle}>Yêu cầu công việc</Text>
+        <View style={styles.list}>
+          {selectedJob.requirement ? (
+            selectedJob.requirement.split('. ').map((req: string, index: number) => (
+              req && <Text key={index} style={styles.listItem}>• {req.trim()}.</Text>
+            ))
+          ) : (
+            <Text style={styles.paragraph}>Không có yêu cầu công việc.</Text>
+          )}
         </View>
 
-        <View style={styles.tabContent}>
-          {activeTab === 'Chi tiết' && <DetailTab />}
-          {activeTab === 'Xin nghỉ' && <ShiftChangeTab />}
-          {activeTab === 'Chấm công' && <CheckinTab />}
-        </View>
+        <Text style={styles.sectionTitle}>Mức lương</Text>
+        <Text style={styles.paragraph}>{selectedJob.salary || 'Không xác định'}</Text>
+
+        <Text style={styles.sectionTitle}>Quyền lợi</Text>
+        <Text style={styles.paragraph}>{selectedJob.benefit || 'Không có thông tin'}</Text>
+
+        <Text style={styles.sectionTitle}>Địa điểm làm việc</Text>
+        <Text style={styles.paragraph}>{selectedJob.location || 'Không xác định'}</Text>
+
+        <Text style={styles.sectionTitle}>Số lượng vị trí</Text>
+        <Text style={styles.paragraph}>{selectedJob.numberOfPositions || 0}</Text>
+
+        <Text style={styles.sectionTitle}>Trạng thái</Text>
+        <Text style={styles.paragraph}>{selectedJob.status || 'Không xác định'}</Text>
+
+        <Text style={styles.sectionTitle}>Ngày đăng tuyển</Text>
+        <Text style={styles.paragraph}>{new Date(selectedJob.postDate).toLocaleDateString('vi-VN')}</Text>
+
+        <Text style={styles.sectionTitle}>Hạn chót ứng tuyển</Text>
+        <Text style={styles.paragraph}>{new Date(selectedJob.deadLine).toLocaleDateString('vi-VN')}</Text>
+
+        <Text style={styles.sectionTitle}>Ca làm việc</Text>
+        <Text style={styles.paragraph}>
+          {startTime && endTime
+            ? `${new Date(startTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: true })} — ${new Date(endTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: true })}`
+            : selectedJob.shift || 'Không xác định'}
+        </Text>
       </ScrollView>
     </SafeAreaView>
   );
@@ -93,40 +150,52 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginTop: 8,
   },
+  headerCard: {
+    backgroundColor: '#fff',
+    padding: 15,
+    borderRadius: 12,
+    elevation: 2,
+  },
+  headerTitleJob: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  headerSubtitle: {
+    fontSize: 13,
+    color: '#666',
+    marginTop: 4,
+  },
+  headerClock: {
+    fontSize: 14,
+    color: '#555',
+    marginTop: 4,
+  },
   container: {
+    padding: 20,
     paddingBottom: 40,
   },
-  tabsWrapper: {
-    marginHorizontal: 20,
-    marginTop: 20,
-    backgroundColor: '#f1f2f6',
-    borderRadius: 12,
-    padding: 4,
-  },
-  tabs: {
-    flexDirection: 'row',
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  tabItem: {
-    flex: 1,
-    paddingVertical: 10,
-    alignItems: 'center',
-    borderRadius: 8,
-  },
-  tabText: {
-    color: '#888',
-    fontSize: 14,
-  },
-  tabActive: {
-    backgroundColor: '#fff',
-  },
-  tabTextActive: {
-    color: '#6C47FF',
+  sectionTitle: {
     fontWeight: 'bold',
-  },
-  tabContent: {
-    paddingHorizontal: 20,
+    fontSize: 15,
     marginTop: 16,
+    marginBottom: 6,
+    color: '#222',
+  },
+  paragraph: {
+    fontSize: 14,
+    color: '#444',
+  },
+  list: {
+    gap: 6,
+  },
+  listItem: {
+    fontSize: 14,
+    color: '#444',
+  },
+  errorText: {
+    textAlign: 'center',
+    color: '#e15a4f',
+    marginTop: 20,
   },
 });

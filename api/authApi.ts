@@ -77,7 +77,7 @@ export const getJobDetail = async (jobId: string) => {
     const response = await axios.get(`${BASE_URL}/recruiter/job/${jobId}`, {
       headers: { Authorization: `Bearer ${token}`, 'accept': '*/*' },
     });
-    return response.data;
+    return response.data.data;
   } catch (error) {
     throw error;
   }

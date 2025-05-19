@@ -39,7 +39,7 @@ const JobCard: React.FC<JobCardProps> = ({
       {/* Salary */}
       <View style={styles.salaryRow}>
         <Text style={styles.salaryAmount}>{salary}</Text>
-        <Text style={styles.salaryUnit}>/Mo</Text>
+        <Text style={styles.salaryUnit}></Text>
       </View>
 
       {/* Tags */}
