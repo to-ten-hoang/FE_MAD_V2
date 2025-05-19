@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useJobStore } from '../../stores/jobStore';
+import Animated, { FadeIn } from 'react-native-reanimated'; // Thêm animation
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 type RouteParams = {
   jobId: string;
@@ -25,11 +27,21 @@ const ApplySuccessScreen = () => {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
       <View style={styles.container}>
-        <Image source={require('../../assets/images/google.png')} style={styles.logo} />
-        <Text style={styles.title}>{selectedJob.title}</Text>
-        <Text style={styles.subtitle}>
-          {selectedJob.recruiter}  ・  {selectedJob.location}  ・  {new Date(selectedJob.postDate).toLocaleDateString('vi-VN', { day: 'numeric', month: 'numeric' })}
-        </Text>
+        {/* Job Header Card */}
+        <Animated.View style={styles.jobHeaderCard} entering={FadeIn.duration(500)}>
+          <Text style={styles.title}>{selectedJob.title}</Text>
+          <View style={styles.subtitleContainer}>
+            <Text style={styles.subtitleItem}>
+              <Ionicons name="business" size={14} color="#6C47FF" /> {selectedJob.recruiter}
+            </Text>
+            <Text style={styles.subtitleItem}>
+              <Ionicons name="location" size={14} color="#6C47FF" /> {selectedJob.location}
+            </Text>
+            {/* <Text style={styles.subtitleItem}>
+              <Ionicons name="calendar" size={14} color="#6C47FF" /> {new Date(selectedJob.postDate).toLocaleDateString('vi-VN', { day: 'numeric', month: 'numeric' })}
+            </Text> */}
+          </View>
+        </Animated.View>
 
         <Image
           source={require('../../assets/images/success.png')}
@@ -38,9 +50,9 @@ const ApplySuccessScreen = () => {
         <Text style={styles.successText}>Thành công</Text>
         <Text style={styles.successDesc}>Chúc mừng, đơn ứng tuyển của bạn đã được gửi đi.</Text>
 
-        <TouchableOpacity style={styles.btnSecondary}>
+        {/* <TouchableOpacity style={styles.btnSecondary}>
           <Text style={styles.btnSecondaryText}>LIÊN HỆ VỚI NHÀ TUYỂN DỤNG</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
         <TouchableOpacity style={styles.btnPrimary} onPress={() => navigation.navigate('Tabs')}>
           <Text style={styles.btnPrimaryText}>QUAY LẠI TRANG CHỦ</Text>
         </TouchableOpacity>
@@ -51,9 +63,39 @@ const ApplySuccessScreen = () => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, alignItems: 'center' },
-  logo: { width: 60, height: 60, borderRadius: 30, marginVertical: 10 },
-  title: { fontSize: 18, fontWeight: 'bold' },
-  subtitle: { fontSize: 13, color: '#666', marginBottom: 20 },
+  jobHeaderCard: {
+    backgroundColor: '#f8f9fd',
+    padding: 20,
+    borderRadius: 12,
+    marginBottom: 20,
+    elevation: 2, // Thêm shadow trên Android
+    shadowColor: '#000', // Shadow trên iOS
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    width: '100%',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    // color: '#1e0eff',
+    textAlign: 'center',
+    marginBottom: 10,
+    textShadowColor: 'rgba(0, 0, 0, 0.1)', // Hiệu ứng bóng nhẹ
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  subtitleContainer: {
+    flexDirection: 'column',
+    gap: 6,
+  },
+  subtitleItem: {
+    fontSize: 14,
+    color: '#555',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
   successIcon: { width: 80, height: 80, marginTop: 20 },
   successText: { fontSize: 20, fontWeight: 'bold', marginTop: 16 },
   successDesc: { fontSize: 14, color: '#444', textAlign: 'center', marginTop: 6 },

@@ -25,7 +25,7 @@ export const register = async (fullName: string, email: string, password: string
       password,
       role,
     });
-    return response.data;
+    return response.data; // Trả về dữ liệu đầy đủ từ server
   } catch (error) {
     throw error;
   }

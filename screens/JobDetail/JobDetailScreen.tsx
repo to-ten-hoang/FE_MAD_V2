@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useJobStore } from '../../stores/jobStore';
+import Animated, { FadeIn } from 'react-native-reanimated'; // Thêm animation
 
 type RouteParams = {
   jobId: string;
@@ -68,18 +69,25 @@ const JobDetailScreen = () => {
           </TouchableOpacity>
         </View>
 
-        <Image source={require('../../assets/images/google.png')} style={styles.logo} />
-        <Text style={styles.title}>{selectedJob.title}</Text>
-        <Text style={styles.subtitle}>
-          {selectedJob.recruiter}  ・  {selectedJob.location}  ・  {new Date(selectedJob.postDate).toLocaleDateString('vi-VN', { day: 'numeric', month: 'numeric' })}
-        </Text>
+        {/* Job Header Card */}
+        <Animated.View style={styles.jobHeaderCard} entering={FadeIn.duration(500)}>
+          <Text style={styles.title}>{selectedJob.title}</Text>
+          <View style={styles.subtitleContainer}>
+            <Text style={styles.subtitleItem}>
+              <Ionicons name="business" size={14} color="#6C47FF" /> {selectedJob.recruiter}
+            </Text>
+            <Text style={styles.subtitleItem}>
+              <Ionicons name="location" size={14} color="#6C47FF" /> {selectedJob.location}
+            </Text>
+          </View>
+        </Animated.View>
 
         {/* Sections */}
         <Text style={styles.sectionTitle}>Mô tả công việc</Text>
         <Text style={styles.paragraph}>{selectedJob.description}</Text>
-        <TouchableOpacity style={styles.btnOutline}>
+        {/* <TouchableOpacity style={styles.btnOutline}>
           <Text style={styles.btnOutlineText}>Xem thêm</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
         <Text style={styles.sectionTitle}>Yêu cầu công việc</Text>
         <View style={styles.list}>
@@ -129,23 +137,37 @@ const styles = StyleSheet.create({
   header: {
     marginBottom: 10,
   },
-  logo: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    alignSelf: 'center',
-    marginBottom: 10,
+  jobHeaderCard: {
+    backgroundColor: '#f8f9fd',
+    padding: 20,
+    borderRadius: 12,
+    marginBottom: 20,
+    elevation: 2, // Thêm shadow trên Android
+    shadowColor: '#000', // Shadow trên iOS
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   title: {
-    fontSize: 18,
+    fontSize: 24,
     fontWeight: 'bold',
+    // color: '#1e0eff',
     textAlign: 'center',
+    marginBottom: 10,
+    textShadowColor: 'rgba(0, 0, 0, 0.1)', // Hiệu ứng bóng nhẹ
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
-  subtitle: {
-    fontSize: 13,
-    color: '#666',
-    textAlign: 'center',
-    marginBottom: 20,
+  subtitleContainer: {
+    flexDirection: 'column',
+    gap: 6,
+  },
+  subtitleItem: {
+    fontSize: 14,
+    color: '#555',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   sectionTitle: {
     fontWeight: 'bold',

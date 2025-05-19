@@ -81,18 +81,17 @@ const LoginScreen = () => {
         <Text style={styles.label}>Nhập mật khẩu</Text>
         <View style={styles.passwordContainer}>
           <TextInput
-            style={styles.input}
+            style={styles.inputPassword}
             placeholder="Nhập mật khẩu"
             value={password}
             onChangeText={setPassword}
             secureTextEntry={!showPassword}
           />
-          <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+          <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeButton}>
             <Ionicons
               name={showPassword ? 'eye-off' : 'eye'}
               size={20}
               color="#888"
-              style={styles.eyeIcon}
             />
           </TouchableOpacity>
         </View>
@@ -139,6 +138,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     paddingHorizontal: 20,
     paddingTop: 50,
+    alignItems: 'center',
   },
   header: {
     alignItems: 'center',
@@ -160,6 +160,7 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
   inputContainer: {
+    width: '100%',
     marginBottom: 20,
   },
   label: {
@@ -174,21 +175,36 @@ const styles = StyleSheet.create({
     padding: 12,
     fontSize: 14,
     backgroundColor: '#f5f6fa',
+    width: '100%',
   },
   passwordContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    position: 'relative',
+    width: '100%',
   },
-  eyeIcon: {
+  inputPassword: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 14,
+    backgroundColor: '#f5f6fa',
+    width: '100%',
+    paddingRight: 40, // Tạo không gian cho icon
+  },
+  eyeButton: {
     position: 'absolute',
-    right: 15,
-    top: 15,
+    right: 10,
+    top: 12,
+    padding: 5,
   },
   optionsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 30,
+    width: '100%',
   },
   checkboxContainer: {
     flexDirection: 'row',
@@ -220,6 +236,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     marginBottom: 20,
+    width: '100%',
   },
   buttonDisabled: {
     opacity: 0.6,

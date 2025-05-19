@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Alert, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/AppNavigator';
 import { register } from '../../api/authApi';
-import { Picker } from '@react-native-picker/picker'; // Import từ thư viện mới
+import { Picker } from '@react-native-picker/picker';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Register'>;
 
@@ -27,9 +27,9 @@ const RegisterScreen = () => {
     setLoading(true);
     try {
       const response = await register(fullName, email, password, role);
-      if (response.success) {
-        Alert.alert('Thành công', response.message || 'Đăng ký thành công', [
-          { text: 'OK', onPress: () => navigation.navigate('Login') },
+      if (response.code === 201 && response.message === 'User registered successfully') {
+        Alert.alert('Thành công', 'Đăng ký thành công. Vui lòng đăng nhập!', [
+          { text: 'OK', onPress: () => navigation.replace('Login') },
         ]);
       } else {
         Alert.alert('Lỗi', response.message || 'Đăng ký thất bại');
@@ -85,18 +85,17 @@ const RegisterScreen = () => {
         <Text style={styles.label}>Nhập mật khẩu</Text>
         <View style={styles.passwordContainer}>
           <TextInput
-            style={styles.input}
+            style={styles.inputPassword}
             placeholder="Nhập mật khẩu"
             value={password}
             onChangeText={setPassword}
             secureTextEntry={!showPassword}
           />
-          <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+          <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeButton}>
             <Ionicons
               name={showPassword ? 'eye-off' : 'eye'}
               size={20}
               color="#888"
-              style={styles.eyeIcon}
             />
           </TouchableOpacity>
         </View>
@@ -110,6 +109,7 @@ const RegisterScreen = () => {
             selectedValue={role}
             onValueChange={(itemValue) => setRole(itemValue)}
             style={styles.picker}
+            itemStyle={styles.pickerItem} // Thêm itemStyle để kiểm soát font và chiều cao
           >
             <Picker.Item label="Người tìm việc" value="JOB_SEEKER" />
             <Picker.Item label="Nhà tuyển dụng" value="RECRUITER" />
@@ -123,7 +123,11 @@ const RegisterScreen = () => {
         onPress={handleRegister}
         disabled={loading}
       >
-        <Text style={styles.registerButtonText}>ĐĂNG KÝ</Text>
+        {loading ? (
+          <ActivityIndicator size="small" color="#fff" />
+        ) : (
+          <Text style={styles.registerButtonText}>ĐĂNG KÝ</Text>
+        )}
       </TouchableOpacity>
 
       {/* Liên kết Đăng nhập */}
@@ -143,6 +147,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     paddingHorizontal: 20,
     paddingTop: 50,
+    alignItems: 'center',
   },
   header: {
     alignItems: 'center',
@@ -164,6 +169,7 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
   inputContainer: {
+    width: '100%',
     marginBottom: 20,
   },
   label: {
@@ -178,25 +184,45 @@ const styles = StyleSheet.create({
     padding: 12,
     fontSize: 14,
     backgroundColor: '#f5f6fa',
+    width: '100%',
   },
   passwordContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    position: 'relative',
+    width: '100%',
   },
-  eyeIcon: {
+  inputPassword: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 14,
+    backgroundColor: '#f5f6fa',
+    width: '100%',
+    paddingRight: 40, // Tạo không gian cho icon
+  },
+  eyeButton: {
     position: 'absolute',
-    right: 15,
-    top: 15,
+    right: 10,
+    top: 12,
+    padding: 5,
   },
   pickerContainer: {
     borderWidth: 1,
     borderColor: '#ddd',
     borderRadius: 8,
     backgroundColor: '#f5f6fa',
+    height: 50, // Tăng chiều cao để Picker hiển thị đầy đủ
+    justifyContent: 'center',
   },
   picker: {
-    height: 50,
     width: '100%',
+    height: 50, // Đảm bảo chiều cao đủ để hiển thị
+  },
+  pickerItem: {
+    fontSize: 14, // Đảm bảo chữ không bị cắt
+    height: 50,
   },
   registerButton: {
     backgroundColor: '#341f97',
@@ -204,6 +230,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     marginBottom: 20,
+    width: '100%',
   },
   buttonDisabled: {
     opacity: 0.6,

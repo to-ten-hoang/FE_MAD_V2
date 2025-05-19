@@ -19,7 +19,6 @@ const ProfileScreen = () => {
         <View style={styles.headerCover}>
           <Image source={require('../../assets/images/avatar.jpg')} style={styles.avatar} />
           <Text style={styles.name}>{fullName || 'Loading...'}</Text>
-          <Text style={styles.location}>California, USA</Text>
 
           <TouchableOpacity style={styles.editButton} onPress={() => navigation.navigate('EditProfile')}>
             <Ionicons name="pencil" size={14} color="#fff" />

@@ -28,7 +28,7 @@ const JobCard: React.FC<JobCardProps> = ({
     <TouchableOpacity style={styles.card} onPress={onPress}>
       {/* Header */}
       <View style={styles.headerRow}>
-        <Image source={logo} style={styles.logo} />
+        {/* <Image source={logo} style={styles.logo} /> */}
         <View style={{ flex: 1 }}>
           <Text style={styles.title}>{title}</Text>
           <Text style={styles.subtitle}>{company} ・{location}</Text>
@@ -75,7 +75,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontWeight: 'bold',
-    fontSize: 14,
+    fontSize: 16,
     color: '#1e1e1e',
   },
   subtitle: {
@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   salaryAmount: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
     color: '#2d3436',
     marginRight: 4,
