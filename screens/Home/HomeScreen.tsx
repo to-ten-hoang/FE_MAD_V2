@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'; // Thêm useState vào import
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -28,7 +28,7 @@ const HomeScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { fullName, isAuthenticated, clearUser } = useUserStore();
   const { jobs, loading, error, fetchJobs } = useJobStore();
-  const [refreshing, setRefreshing] = useState(false); // Đảm bảo useState hoạt động
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -52,6 +52,10 @@ const HomeScreen = () => {
 
   const handleSearchFocus = () => {
     navigation.navigate('Search');
+  };
+
+  const handleJobPress = (jobId: number) => {
+    navigation.navigate('JobDetail', { jobId: jobId.toString() });
   };
 
   return (
@@ -97,19 +101,19 @@ const HomeScreen = () => {
           <ActivityIndicator size="large" color="#341f97" />
         ) : error ? (
           <Text style={styles.noJobs}>{error}</Text>
-        ) : jobs.length === 0 ? (
+        ) : !Array.isArray(jobs) || jobs.length === 0 ? (
           <Text style={styles.noJobs}>Không có công việc nào để hiển thị.</Text>
         ) : (
           jobs.map((job) => (
             <JobCard
-              key={`job-${job.id}`} // Sửa lỗi cú pháp, dùng backtick và ${}
+              key={`job-${job.id}`}
               title={job.title}
               company={job.recruiter}
               location={job.location}
               salary={job.salary}
-              tags={[job.shift, job.active ? 'Đang tuyển' : 'Đã đóng']}
+              tags={[job.shift, job.status === 'OPEN' ? 'Đang tuyển' : 'Đã đóng']}
               logo={appleLogo}
-              onPress={() => navigation.navigate('JobDetail')}
+              onPress={() => handleJobPress(job.id)}
             />
           ))
         )}

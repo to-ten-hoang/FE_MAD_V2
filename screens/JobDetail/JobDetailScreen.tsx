@@ -1,12 +1,62 @@
-// src/screens/JobDetail/JobDetailScreen.tsx
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { useJobStore } from '../../stores/jobStore';
+
+type RouteParams = {
+  jobId: string;
+};
 
 const JobDetailScreen = () => {
   const navigation = useNavigation();
+  const { params } = useRoute();
+  const { jobId } = params as RouteParams;
+  const { selectedJob, loading, error, fetchJobDetail } = useJobStore();
+  const [confirmVisible, setConfirmVisible] = useState(false);
+
+  useEffect(() => {
+    fetchJobDetail(jobId);
+  }, [jobId, fetchJobDetail]);
+
+  const handleApply = () => {
+    Alert.alert(
+      'Xác nhận ứng tuyển',
+      `Bạn có chắc chắn muốn ứng tuyển vào vị trí ${selectedJob?.title} tại ${selectedJob?.recruiter}?`,
+      [
+        { text: 'Hủy', style: 'cancel' },
+        {
+          text: 'Xác nhận',
+          onPress: () => navigation.navigate('ApplyJob', { jobId }),
+        },
+      ]
+    );
+  };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ActivityIndicator size="large" color="#1e0eff" />
+      </SafeAreaView>
+    );
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <Text style={styles.errorText}>{error}</Text>
+      </SafeAreaView>
+    );
+  }
+
+  if (!selectedJob) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <Text style={styles.errorText}>No job data available</Text>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
@@ -19,38 +69,57 @@ const JobDetailScreen = () => {
         </View>
 
         <Image source={require('../../assets/images/google.png')} style={styles.logo} />
-        <Text style={styles.title}>UI/UX Designer</Text>
-        <Text style={styles.subtitle}>Google  ・  California  ・  1 ngày trước</Text>
+        <Text style={styles.title}>{selectedJob.title}</Text>
+        <Text style={styles.subtitle}>
+          {selectedJob.recruiter}  ・  {selectedJob.location}  ・  {new Date(selectedJob.postDate).toLocaleDateString('vi-VN', { day: 'numeric', month: 'numeric' })}
+        </Text>
 
         {/* Sections */}
         <Text style={styles.sectionTitle}>Mô tả công việc</Text>
-        <Text style={styles.paragraph}>
-          Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque...
-        </Text>
+        <Text style={styles.paragraph}>{selectedJob.description}</Text>
         <TouchableOpacity style={styles.btnOutline}>
           <Text style={styles.btnOutlineText}>Xem thêm</Text>
         </TouchableOpacity>
 
         <Text style={styles.sectionTitle}>Yêu cầu công việc</Text>
         <View style={styles.list}>
-          <Text>• Sed ut perspiciatis unde omnis iste natus.</Text>
-          <Text>• Neque porro quisquam est qui dolorem.</Text>
-          <Text>• Nemo enim ipsam voluptatem quia voluptas.</Text>
+          {selectedJob.requirement.split('. ').map((req: string, index: number) => (
+            req && <Text key={index}>• {req.trim()}.</Text>
+          ))}
         </View>
 
+        <Text style={styles.sectionTitle}>Mức lương</Text>
+        <Text style={styles.paragraph}>{selectedJob.salary}</Text>
+
+        <Text style={styles.sectionTitle}>Quyền lợi</Text>
+        <Text style={styles.paragraph}>{selectedJob.benefit}</Text>
+
         <Text style={styles.sectionTitle}>Địa điểm làm việc</Text>
-        <Text style={styles.paragraph}>Overlook Avenue, Belleville, NJ, USA</Text>
+        <Text style={styles.paragraph}>{selectedJob.location}</Text>
+
+        <Text style={styles.sectionTitle}>Số lượng vị trí</Text>
+        <Text style={styles.paragraph}>{selectedJob.numberOfPositions}</Text>
+
+        <Text style={styles.sectionTitle}>Trạng thái</Text>
+        <Text style={styles.paragraph}>{selectedJob.status}</Text>
+
+        <Text style={styles.sectionTitle}>Ngày đăng tuyển</Text>
+        <Text style={styles.paragraph}>{new Date(selectedJob.postDate).toLocaleDateString('vi-VN')}</Text>
+
+        <Text style={styles.sectionTitle}>Hạn chót ứng tuyển</Text>
+        <Text style={styles.paragraph}>{new Date(selectedJob.deadLine).toLocaleDateString('vi-VN')}</Text>
+
+        <Text style={styles.sectionTitle}>Ca làm việc</Text>
+        <Text style={styles.paragraph}>{selectedJob.shift}</Text>
 
         {/* Button */}
-        <TouchableOpacity style={styles.applyBtn} onPress={() => navigation.navigate('ApplyJob')}>
+        <TouchableOpacity style={styles.applyBtn} onPress={handleApply}>
           <Text style={styles.applyBtnText}>ỨNG TUYỂN NGAY</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
 };
-
-export default JobDetailScreen;
 
 const styles = StyleSheet.create({
   container: {
@@ -115,4 +184,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
   },
+  errorText: {
+    textAlign: 'center',
+    color: '#e15a4f',
+    marginTop: 20,
+  },
 });
+
+export default JobDetailScreen;

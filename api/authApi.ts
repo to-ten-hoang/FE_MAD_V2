@@ -38,7 +38,7 @@ export const getUserProfile = async (userId: number) => {
     const response = await axios.get(`${BASE_URL}/auth/profile/${userId}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    return response.data;
+    return response.data.data;
   } catch (error) {
     throw error;
   }
@@ -51,6 +51,36 @@ export const getAllJobs = async () => {
     const response = await axios.get(`${BASE_URL}/recruiter/jobs/all`, {
       headers: { Authorization: `Bearer ${token}` },
     });
+    return response.data.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Lấy chi tiết một công việc
+export const getJobDetail = async (jobId: string) => {
+  try {
+    const token = await getToken();
+    const response = await axios.get(`${BASE_URL}/recruiter/job/${jobId}`, {
+      headers: { Authorization: `Bearer ${token}`, 'accept': '*/*' },
+    });
+    return response.data.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const applyJob = async (jobSeekerId: number, jobPostingId: number) => {
+  try {
+    const token = await getToken();
+    const response = await axios.post(
+      `${BASE_URL}/applications/apply`,
+      {},
+      {
+        headers: { Authorization: `Bearer ${token}`, 'accept': '*/*' },
+        params: { jobSeekerId, jobPostingId },
+      }
+    );
     return response.data;
   } catch (error) {
     throw error;

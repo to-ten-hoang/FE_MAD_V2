@@ -1,24 +1,68 @@
-// src/screens/JobDetail/ApplyJobScreen.tsx
-import React, { useState } from 'react';
-import {
-  View, Text, StyleSheet, TouchableOpacity, TextInput, Image
-} from 'react-native';
-import * as DocumentPicker from 'expo-document-picker';
-import { useNavigation } from '@react-navigation/native';
+import React, { useEffect } from 'react';
+import { View, Text, StyleSheet, Image, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { useJobStore } from '../../stores/jobStore';
+import { useUserStore } from '../../stores/userStore';
+
+type RouteParams = {
+  jobId: string;
+};
 
 const ApplyJobScreen = () => {
-  const [cvFile, setCvFile] = useState<DocumentPicker.DocumentPickerAsset | null>(null);
-  const [coverLetter, setCoverLetter] = useState('');
   const navigation = useNavigation();
+  const { params } = useRoute();
+  const { jobId } = params as RouteParams;
+  const { selectedJob, loading, error, fetchJobDetail, applyJob } = useJobStore();
+  const { userId, isAuthenticated } = useUserStore();
 
-  const handlePickFile = async () => {
-    const result = await DocumentPicker.getDocumentAsync({ type: '*/*' });
-    if (result.assets && result.assets.length > 0) {
-      setCvFile(result.assets[0]);
+  useEffect(() => {
+    fetchJobDetail(jobId);
+  }, [jobId, fetchJobDetail]);
+
+  const handleApply = async () => {
+    if (!isAuthenticated || !userId) {
+      Alert.alert('Lỗi', 'Vui lòng đăng nhập để ứng tuyển.');
+      return;
+    }
+
+    if (!selectedJob) {
+      Alert.alert('Lỗi', 'Không tìm thấy thông tin công việc.');
+      return;
+    }
+
+    try {
+      await applyJob(userId, parseInt(jobId));
+      navigation.navigate('ApplySuccess', { jobId });
+    } catch (err: any) {
+      Alert.alert('Lỗi', err.message || 'Ứng tuyển thất bại. Vui lòng thử lại.');
     }
   };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ActivityIndicator size="large" color="#1e0eff" />
+      </SafeAreaView>
+    );
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <Text style={styles.errorText}>{error}</Text>
+      </SafeAreaView>
+    );
+  }
+
+  if (!selectedJob) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <Text style={styles.errorText}>No job data available</Text>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
@@ -28,43 +72,18 @@ const ApplyJobScreen = () => {
         </TouchableOpacity>
 
         <Image source={require('../../assets/images/google.png')} style={styles.logo} />
-        <Text style={styles.title}>UI/UX Designer</Text>
-        <Text style={styles.subtitle}>Google ・ California ・ 1 ngày trước</Text>
+        <Text style={styles.title}>{selectedJob.title}</Text>
+        <Text style={styles.subtitle}>
+          {selectedJob.recruiter}  ・  {selectedJob.location}  ・  {new Date(selectedJob.postDate).toLocaleDateString('vi-VN', { day: 'numeric', month: 'numeric' })}
+        </Text>
 
-        <Text style={styles.section}>Tải CV lên</Text>
-        <TouchableOpacity style={styles.uploadBox} onPress={handlePickFile}>
-          {cvFile ? (
-            <Text style={styles.fileName}>{cvFile.name}</Text>
-          ) : (
-            <>
-              <Ionicons name="cloud-upload-outline" size={24} color="#888" />
-              <Text style={styles.uploadText}>Nhấn để tải lên</Text>
-            </>
-          )}
-        </TouchableOpacity>
-
-        <Text style={styles.section}>Thư giới thiệu</Text>
-        <TextInput
-          multiline
-          placeholder="Giải thích lý do vì sao bạn là người phù hợp..."
-          style={styles.input}
-          value={coverLetter}
-          onChangeText={setCoverLetter}
-        />
-
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => navigation.navigate('ApplySuccess')}
-          disabled={!cvFile}
-        >
-          <Text style={styles.buttonText}>ỨNG TUYỂN NGAY</Text>
+        <TouchableOpacity style={styles.button} onPress={handleApply}>
+          <Text style={styles.buttonText}>XÁC NHẬN ỨNG TUYỂN</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
 };
-
-export default ApplyJobScreen;
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20 },
@@ -86,35 +105,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 20,
   },
-  section: {
-    fontWeight: 'bold',
-    marginBottom: 8,
-    marginTop: 16,
-  },
-  uploadBox: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    padding: 14,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  uploadText: {
-    color: '#666',
-    marginTop: 6,
-  },
-  fileName: {
-    fontSize: 14,
-    color: '#333',
-  },
-  input: {
-    minHeight: 100,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 12,
-    textAlignVertical: 'top',
-  },
   button: {
     backgroundColor: '#1e0eff',
     padding: 14,
@@ -126,4 +116,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
   },
+  errorText: {
+    textAlign: 'center',
+    color: '#e15a4f',
+    marginTop: 20,
+  },
 });
+
+export default ApplyJobScreen;

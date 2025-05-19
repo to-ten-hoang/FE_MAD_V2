@@ -1,31 +1,35 @@
-// src/screens/JobDetail/ApplySuccessScreen.tsx
 import React from 'react';
-import {
-  View, Text, StyleSheet, Image, TouchableOpacity
-} from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { useJobStore } from '../../stores/jobStore';
+
+type RouteParams = {
+  jobId: string;
+};
 
 const ApplySuccessScreen = () => {
   const navigation = useNavigation();
+  const { params } = useRoute();
+  const { jobId } = params as RouteParams;
+  const { selectedJob } = useJobStore();
+
+  if (!selectedJob) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <Text style={styles.errorText}>No job data available</Text>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
       <View style={styles.container}>
         <Image source={require('../../assets/images/google.png')} style={styles.logo} />
-        <Text style={styles.title}>UI/UX Designer</Text>
-        <Text style={styles.subtitle}>Google ・ California ・ 1 ngày trước</Text>
-
-        <View style={styles.cvBox}>
-          <Image
-            source={require('../../assets/images/icon_pdf.png')}
-            style={styles.pdfIcon}
-          />
-          <View>
-            <Text style={styles.cvName}>Jamet Kudasi - CV - UI/UX Designer</Text>
-            <Text style={styles.cvDate}>867 KB • 16 Feb 2022 at 11:30 am</Text>
-          </View>
-        </View>
+        <Text style={styles.title}>{selectedJob.title}</Text>
+        <Text style={styles.subtitle}>
+          {selectedJob.recruiter}  ・  {selectedJob.location}  ・  {new Date(selectedJob.postDate).toLocaleDateString('vi-VN', { day: 'numeric', month: 'numeric' })}
+        </Text>
 
         <Image
           source={require('../../assets/images/success.png')}
@@ -45,25 +49,11 @@ const ApplySuccessScreen = () => {
   );
 };
 
-export default ApplySuccessScreen;
-
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, alignItems: 'center' },
   logo: { width: 60, height: 60, borderRadius: 30, marginVertical: 10 },
   title: { fontSize: 18, fontWeight: 'bold' },
   subtitle: { fontSize: 13, color: '#666', marginBottom: 20 },
-  cvBox: {
-    flexDirection: 'row',
-    backgroundColor: '#f1f2f6',
-    padding: 12,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginBottom: 20,
-    width: '100%',
-  },
-  pdfIcon: { width: 32, height: 32, marginRight: 10 },
-  cvName: { fontWeight: 'bold' },
-  cvDate: { fontSize: 12, color: '#777' },
   successIcon: { width: 80, height: 80, marginTop: 20 },
   successText: { fontSize: 20, fontWeight: 'bold', marginTop: 16 },
   successDesc: { fontSize: 14, color: '#444', textAlign: 'center', marginTop: 6 },
@@ -87,4 +77,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
   },
+  errorText: {
+    textAlign: 'center',
+    color: '#e15a4f',
+    marginTop: 20,
+  },
 });
+
+export default ApplySuccessScreen;
