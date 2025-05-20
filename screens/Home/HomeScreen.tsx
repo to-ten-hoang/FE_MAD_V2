@@ -112,7 +112,7 @@ const HomeScreen = () => {
               location={job.location}
               salary={job.salary}
               tags={[job.shift, job.status === 'OPEN' ? 'Đang tuyển' : 'Đã đóng']}
-              logo={appleLogo}
+              // logo={appleLogo}
               onPress={() => handleJobPress(job.id)}
             />
           ))

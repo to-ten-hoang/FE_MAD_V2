@@ -8,7 +8,7 @@ type JobCardProps = {
   location: string;
   salary: string;
   tags: string[];
-  logo: any;
+  // logo: any;
   onPress?: () => void;
 };
 
@@ -18,7 +18,7 @@ const JobCard: React.FC<JobCardProps> = ({
   location,
   salary,
   tags,
-  logo,
+  // logo,
   onPress
 }) => {
   // Lọc bỏ tag "Ứng tuyển"

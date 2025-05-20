@@ -145,3 +145,18 @@ export const markNotificationAsRead = async (notificationId: number) => {
     throw error;
   }
 };
+
+// Tìm kiếm công việc
+export const searchJobs = async (searchQuery: string) => {
+  try {
+    const token = await getToken();
+    if (!token) throw new Error('No authentication token found');
+    const response = await axios.get(`${BASE_URL}/seeker/jobs/search`, {
+      headers: { Authorization: `Bearer ${token}`, 'accept': '*/*' },
+      params: { search: searchQuery },
+    });
+    return response.data.data; // Trả về mảng jobs từ response.data.data
+  } catch (error) {
+    throw error;
+  }
+};

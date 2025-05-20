@@ -1,56 +1,131 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
   TextInput,
   StyleSheet,
-  Image,
+  FlatList,
+  RefreshControl,
+  ActivityIndicator,
   TouchableOpacity,
-  FlatList
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import JobCard from '../../components/Common/JobCard';
+import { useUserStore } from '../../stores/userStore';
+import { searchJobs } from '../../api/authApi';
+import debounce from 'lodash/debounce';
 
-
-const mockJobs = [
-  {
-    id: '1',
-    title: 'UI/UX Designer',
-    company: 'Google inc',
-    location: 'California, USA',
-    salary: '$15K/Mo',
-    tags: ['Design', 'Full time', 'Senior designer'],
-    logo: require('../../assets/images/google.png'),
-  },
-  {
-    id: '2',
-    title: 'Lead Designer',
-    company: 'Dribbble inc',
-    location: 'California, USA',
-    salary: '$20K/Mo',
-    tags: ['Design', 'Full time', 'Senior designer'],
-    logo: require('../../assets/images/dribbble.png'),
-  },
-  {
-    id: '3',
-    title: 'UX Researcher',
-    company: 'Twitter inc',
-    location: 'California, USA',
-    salary: '$12K/Mo',
-    tags: ['Design', 'Full time', 'Senior designer'],
-    logo: require('../../assets/images/twitter.png'),
-  },
-];
+// Định nghĩa interface cho Job
+interface Job {
+  id: number;
+  title: string;
+  description: string;
+  requirement: string;
+  salary: string;
+  benefit: string;
+  location: string;
+  numberOfPositions: number;
+  postDate: string;
+  deadLine: string;
+  updatedDate: string;
+  status: string;
+  recruiter: string;
+  shift: string;
+}
 
 const SearchScreen = () => {
-  const [search, setSearch] = useState('');
   const navigation = useNavigation();
+  const { userId, isAuthenticated, initialize } = useUserStore();
+  const [search, setSearch] = useState('');
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const filtered = search
-    ? mockJobs.filter(job => job.title.toLowerCase().includes(search.toLowerCase()))
-    : [];
+  // Hàm fetch dữ liệu tìm kiếm
+  const fetchJobs = useCallback(async (searchQuery: string, isRefreshing = false) => {
+    if (isRefreshing) {
+      setRefreshing(true);
+    } else {
+      setLoading(true);
+    }
+    setError(null);
+    try {
+      const data = await searchJobs(searchQuery);
+      setJobs(data);
+    } catch (err: any) {
+      setError(err.message || 'Failed to fetch jobs');
+    } finally {
+      if (isRefreshing) {
+        setRefreshing(false);
+      } else {
+        setLoading(false);
+      }
+    }
+  }, [userId]);
+
+  // Debounce fetchJobs để tránh gọi API quá thường xuyên
+  const debouncedFetchJobs = useCallback(
+    debounce((query: string) => {
+      fetchJobs(query);
+    }, 500), // Trì hoãn 500ms
+    [fetchJobs]
+  );
+
+  // Khởi tạo dữ liệu lần đầu
+  useEffect(() => {
+    if (isAuthenticated && userId) {
+      fetchJobs('');
+    } else {
+      initialize().then(() => {
+        if (isAuthenticated && userId) fetchJobs('');
+      });
+    }
+  }, [isAuthenticated, userId, initialize, fetchJobs]);
+
+  // Làm mới dữ liệu khi focus
+  useFocusEffect(
+    useCallback(() => {
+      if (isAuthenticated && userId) {
+        fetchJobs(search, false);
+      }
+    }, [isAuthenticated, userId, search, fetchJobs])
+  );
+
+  // Xử lý thay đổi search với debounce
+  const handleSearchChange = (text: string) => {
+    setSearch(text);
+    debouncedFetchJobs(text);
+  };
+
+  const renderItem = ({ item }: { item: Job }) => (
+    <JobCard
+      title={item.title}
+      company={item.recruiter}
+      location={item.location}
+      salary={item.salary}
+      tags={item.benefit.split(', ').map(b => b.trim())}
+      onPress={() => navigation.navigate('JobDetail', { jobId: item.id.toString() })}
+    />
+  );
+
+  if (loading && jobs.length === 0) {
+    return (
+      <SafeAreaView style={styles.safeContainer}>
+        <ActivityIndicator size="large" color="#1e0eff" />
+      </SafeAreaView>
+    );
+  }
+
+  if (error && jobs.length === 0) {
+    return (
+      <SafeAreaView style={styles.safeContainer}>
+        <Text style={styles.errorText}>{error}</Text>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeContainer}>
@@ -63,33 +138,31 @@ const SearchScreen = () => {
           <TextInput
             placeholder="Search"
             value={search}
-            onChangeText={setSearch}
+            onChangeText={handleSearchChange}
             style={styles.input}
           />
-          {/* <TouchableOpacity style={styles.filterBtn}>
-            <Image
-              source={require('../../assets/images/icon_filter.png')}
-              style={{ width: 24, height: 24 }}
-            />
-          </TouchableOpacity> */}
         </View>
 
         {/* Result list */}
         <FlatList
-          data={filtered}
-          keyExtractor={item => item.id}
-          renderItem={({ item }) => (
-            <JobCard
-              title={item.title}
-              company={item.company}
-              location={item.location}
-              salary={item.salary.replace('/Mo', '')} // gọt /Mo để tránh lỗi
-              tags={item.tags}
-              logo={item.logo}
-              onPress={() => navigation.navigate('JobDetail')} // <-- Thêm dòng này
+          data={jobs}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id.toString()}
+          contentContainerStyle={styles.list}
+          ListEmptyComponent={<Text style={styles.emptyText}>Không tìm thấy công việc nào</Text>}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => fetchJobs(search, true)}
+              colors={['#1e0eff']}
             />
-          )}
-/>
+          }
+        />
+        {error && jobs.length > 0 && (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>{error}</Text>
+          </View>
+        )}
       </View>
     </SafeAreaView>
   );
@@ -110,33 +183,21 @@ const styles = StyleSheet.create({
     height: 48,
   },
   input: { flex: 1, paddingHorizontal: 10, height: 40 },
-  filterBtn: {
-    backgroundColor: '#ff9f43',
-    padding: 8,
-    borderRadius: 8,
+  list: { paddingBottom: 20 },
+  emptyText: {
+    textAlign: 'center',
+    color: '#666',
+    marginTop: 20,
   },
-  card: {
-    flexDirection: 'row',
-    padding: 15,
-    backgroundColor: '#f5f6fa',
-    borderRadius: 12,
-    marginBottom: 15,
-    alignItems: 'center',
+  errorContainer: {
+    padding: 10,
+    backgroundColor: '#ffe6e6',
+    borderRadius: 5,
+    marginHorizontal: 20,
+    marginTop: 10,
   },
-  logo: { width: 40, height: 40, marginRight: 10 },
-  title: { fontWeight: 'bold' },
-  tags: { flexDirection: 'row', marginTop: 5 },
-  tag: {
-    backgroundColor: '#dcdde1',
-    borderRadius: 8,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    marginRight: 5,
-    fontSize: 12,
+  errorText: {
+    textAlign: 'center',
+    color: '#e15a4f',
   },
-  salary: {
-    fontWeight: '600',
-    marginTop: 8,
-    color: '#444'
-  }
 });
