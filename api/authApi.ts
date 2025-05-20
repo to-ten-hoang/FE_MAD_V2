@@ -113,3 +113,35 @@ export const getSeekerSchedule = async (seekerId: number) => {
     throw error;
   }
 };
+
+// Lấy danh sách thông báo của người dùng
+export const getNotifications = async (userId: number) => {
+  try {
+    const token = await getToken();
+    if (!token) throw new Error('No authentication token found');
+    const response = await axios.get(`${BASE_URL}/api/notifications/user/${userId}`, {
+      headers: { Authorization: `Bearer ${token}`, 'accept': '*/*' },
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Đánh dấu thông báo là đã đọc
+export const markNotificationAsRead = async (notificationId: number) => {
+  try {
+    const token = await getToken();
+    if (!token) throw new Error('No authentication token found');
+    const response = await axios.put(
+      `${BASE_URL}/api/notifications/${notificationId}/read`,
+      {},
+      {
+        headers: { Authorization: `Bearer ${token}`, 'accept': '*/*' },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};

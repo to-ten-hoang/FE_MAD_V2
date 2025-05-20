@@ -1,45 +1,62 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
-  Image,
   TouchableOpacity,
+  FlatList,
+  RefreshControl,
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 import JobCard from '../../components/Schedule/JobCard';
 import { useUserStore } from '../../stores/userStore';
+import { Image } from 'react-native';
 
 const ScheduleScreen = () => {
   const navigation = useNavigation();
   const { schedule, loading, error, fetchSchedule } = useUserStore();
+  const [initialLoading, setInitialLoading] = React.useState(true);
+  const [refreshing, setRefreshing] = React.useState(false);
+  const [scheduleError, setScheduleError] = React.useState<string | null>(null);
 
+  // Hàm fetch dữ liệu lịch
+  const fetchScheduleData = useCallback(async (isRefreshing = false) => {
+    if (isRefreshing) {
+      setRefreshing(true);
+    }
+    setScheduleError(null);
+    try {
+      await fetchSchedule();
+    } catch (err: any) {
+      setScheduleError(err.message || 'Failed to fetch schedule');
+    } finally {
+      if (isRefreshing) {
+        setRefreshing(false);
+      }
+      if (initialLoading) {
+        setInitialLoading(false);
+      }
+    }
+  }, [fetchSchedule, initialLoading]);
+
+  // Khởi tạo dữ liệu lần đầu
   useEffect(() => {
-    fetchSchedule();
-  }, [fetchSchedule]);
+    fetchScheduleData();
+  }, [fetchScheduleData]);
+
+  // Làm mới dữ liệu trong nền khi màn hình được focus
+  useFocusEffect(
+    useCallback(() => {
+      fetchScheduleData(false);
+    }, [fetchScheduleData])
+  );
 
   const handlePressJob = (jobPostingId: number, startTime: string, endTime: string) => {
     navigation.navigate('JobDetailSchedule' as never, { jobPostingId, startTime, endTime } as any);
   };
-
-  if (loading) {
-    return (
-      <SafeAreaView style={styles.safe}>
-        <ActivityIndicator size="large" color="#6C47FF" />
-      </SafeAreaView>
-    );
-  }
-
-  if (error) {
-    return (
-      <SafeAreaView style={styles.safe}>
-        <Text style={styles.errorText}>{error}</Text>
-      </SafeAreaView>
-    );
-  }
 
   // Nhóm lịch theo ngày
   const groupedSchedule = schedule.reduce((acc: any, entry: any) => {
@@ -67,6 +84,22 @@ const ScheduleScreen = () => {
     entries: groupedSchedule[date],
   }));
 
+  if (initialLoading) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <ActivityIndicator size="large" color="#6C47FF" />
+      </SafeAreaView>
+    );
+  }
+
+  if (scheduleError && schedule.length === 0) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <Text style={styles.errorText}>{scheduleError}</Text>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.safe}>
       {/* Header */}
@@ -85,26 +118,38 @@ const ScheduleScreen = () => {
       </View>
 
       {/* Nội dung */}
-      <ScrollView style={styles.container}>
-        {scheduleData.length === 0 ? (
-          <Text style={styles.noSchedule}>Không có lịch làm việc nào.</Text>
-        ) : (
-          scheduleData.map((day, index) => (
-            <View key={index} style={styles.dayBlock}>
-              <Text style={styles.date}>{day.date}</Text>
-              {day.entries.map((entry: any, idx: number) => (
-                <JobCard
-                  key={idx}
-                  title={entry.title}
-                  hours={entry.hours}
-                  clock={entry.clock}
-                  onPress={() => handlePressJob(entry.jobPostingId, entry.startTime, entry.endTime)}
-                />
-              ))}
-            </View>
-          ))
+      <FlatList
+        data={scheduleData}
+        renderItem={({ item }) => (
+          <View style={styles.dayBlock}>
+            <Text style={styles.date}>{item.date}</Text>
+            {item.entries.map((entry: any, idx: number) => (
+              <JobCard
+                key={idx}
+                title={entry.title}
+                hours={entry.hours}
+                clock={entry.clock}
+                onPress={() => handlePressJob(entry.jobPostingId, entry.startTime, entry.endTime)}
+              />
+            ))}
+          </View>
         )}
-      </ScrollView>
+        keyExtractor={(item) => item.date}
+        contentContainerStyle={styles.container}
+        ListEmptyComponent={<Text style={styles.noSchedule}>Không có lịch làm việc nào.</Text>}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => fetchScheduleData(true)}
+            colors={['#6C47FF']}
+          />
+        }
+      />
+      {scheduleError && schedule.length > 0 && (
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{scheduleError}</Text>
+        </View>
+      )}
     </SafeAreaView>
   );
 };
@@ -166,9 +211,15 @@ const styles = StyleSheet.create({
     color: '#666',
     marginTop: 20,
   },
+  errorContainer: {
+    padding: 10,
+    backgroundColor: '#ffe6e6',
+    borderRadius: 5,
+    marginHorizontal: 20,
+    marginTop: 10,
+  },
   errorText: {
     textAlign: 'center',
     color: '#e15a4f',
-    marginTop: 20,
   },
 });

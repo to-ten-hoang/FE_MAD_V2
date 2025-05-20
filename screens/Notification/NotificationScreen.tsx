@@ -1,125 +1,139 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Image,
-  TouchableOpacity,
-  ScrollView
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, RefreshControl, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useUserStore } from 'stores/userStore';
+import { getNotifications, markNotificationAsRead } from 'api/authApi';
 
-type NotificationItem = {
-  id: string;
+// Định nghĩa interface cho Notification
+interface Notification {
+  id: number;
   title: string;
-  content: string;
-  logo: any;
-  buttonText: string;
-  time: string;
-  color: string;
-  read: boolean;
-};
-
-const initialNotifications: NotificationItem[] = [
-  {
-    id: '1',
-    title: 'Đã gửi đơn ứng tuyển',
-    content:
-      'Đơn ứng tuyển của bạn vào Google Inc. đã được chuyển đến công ty để xem xét.',
-    logo: require('../../assets/images/google.png'),
-    buttonText: 'Chi tiết đơn ứng tuyển',
-    time: '25 phút trước',
-    color: '#f1efff',
-    read: false,
-  },
-  {
-    id: '2',
-    title: 'Thông báo việc làm của bạn',
-    content:
-      'Brandon, có hơn 10 công việc mới cho vị trí UI/UX Designer tại California, USA.',
-    logo: require('../../assets/images/dribbble.png'),
-    buttonText: 'Xem việc mới',
-    time: '1 giờ trước',
-    color: '#fff0f5',
-    read: false,
-  },
-  {
-    id: '3',
-    title: 'Twitter Inc.',
-    content:
-      'đang tìm kiếm một Nhà thiết kế UI/UX. Xem ngay công việc này và 9 gợi ý việc làm khác.',
-    logo: require('../../assets/images/twitter.png'),
-    buttonText: 'Xem công việc',
-    time: '6 giờ trước',
-    color: '#e8f6ff',
-    read: true,
-  },
-  {
-    id: '4',
-    title: 'Facebook',
-    content:
-      'Check out 5 jobs similar to the one you saw recently: UI/UX Designer on Facebook',
-    logo: require('../../assets/images/facebook.png'),
-    buttonText: 'Xem công việc',
-    time: '1 ngày trước',
-    color: '#f0f2ff',
-    read: true,
-  },
-];
+  message: string;
+  status: boolean;
+  createdAt: string;
+  jobPostingId: number;
+}
 
 const NotificationScreen = () => {
   const navigation = useNavigation();
-  const [notifications, setNotifications] = useState(initialNotifications);
+  const { userId, isAuthenticated, initialize } = useUserStore();
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [initialLoading, setInitialLoading] = useState(true);
 
-  const markAllAsRead = () => {
-    const updated = notifications.map(n => ({ ...n, read: true }));
-    setNotifications(updated);
+  // Hàm fetch dữ liệu thông báo
+  const fetchNotifications = useCallback(async (isRefreshing = false) => {
+    if (isRefreshing) {
+      setRefreshing(true);
+    }
+    setError(null);
+    try {
+      const data = await getNotifications(userId!);
+      setNotifications(data);
+    } catch (err: any) {
+      setError(err.message || 'Failed to fetch notifications');
+    } finally {
+      if (isRefreshing) {
+        setRefreshing(false);
+      }
+      if (initialLoading) {
+        setInitialLoading(false);
+      }
+    }
+  }, [userId, initialLoading]);
+
+  // Khởi tạo dữ liệu lần đầu
+  useEffect(() => {
+    if (isAuthenticated && userId) {
+      fetchNotifications();
+    } else {
+      initialize().then(() => {
+        if (isAuthenticated && userId) fetchNotifications();
+      });
+    }
+  }, [isAuthenticated, userId, initialize, fetchNotifications]);
+
+  // Làm mới dữ liệu trong nền khi màn hình được focus
+  useFocusEffect(
+    useCallback(() => {
+      if (isAuthenticated && userId) {
+        // Làm mới trong nền, không hiển thị loading
+        fetchNotifications(false);
+      }
+    }, [isAuthenticated, userId, fetchNotifications])
+  );
+
+  const markAsRead = async (id: number) => {
+    try {
+      await markNotificationAsRead(id);
+      const updatedNotifications = notifications.map((notification) =>
+        notification.id === id ? { ...notification, status: true } : notification
+      );
+      setNotifications(updatedNotifications);
+    } catch (err: any) {
+      setError(err.message || 'Failed to mark notification as read');
+    }
   };
 
-  return (
-    <SafeAreaView style={styles.safeContainer}>
-      <ScrollView contentContainerStyle={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back" size={24} color="#333" />
-          </TouchableOpacity>
-          <Text style={styles.title}>Thông báo</Text>
-          <TouchableOpacity onPress={markAllAsRead}>
-            <Text style={styles.markAll}>Đã đọc tất cả</Text>
-          </TouchableOpacity>
-        </View>
+  const renderItem = ({ item }: { item: Notification }) => (
+    <TouchableOpacity style={[styles.notificationItem, !item.status && styles.unread]} onPress={() => markAsRead(item.id)}>
+      <View style={styles.notificationContent}>
+        <Text style={styles.title}>{item.title}</Text>
+        <Text style={styles.message}>{item.message}</Text>
+        <Text style={styles.date}>{new Date(item.createdAt).toLocaleDateString('vi-VN')}</Text>
+      </View>
+      {!item.status && <Ionicons name="ellipse" size={10} color="#1e0eff" style={styles.unreadIndicator} />}
+    </TouchableOpacity>
+  );
 
-        {/* Notification cards */}
-        {notifications.map((item) => (
-          <View
-            key={item.id}
-            style={[
-              styles.card,
-              { backgroundColor: item.read ? '#f8f8f8' : item.color },
-            ]}
-          >
-            <Image source={item.logo} style={styles.logo} />
-            <View style={{ flex: 1 }}>
-              <Text
-                style={[
-                  styles.cardTitle,
-                  !item.read && { color: '#341f97' },
-                ]}
-              >
-                {item.title}
-              </Text>
-              <Text style={styles.content}>{item.content}</Text>
-              <TouchableOpacity style={styles.button}>
-                <Text style={styles.buttonText}>{item.buttonText}</Text>
-              </TouchableOpacity>
-            </View>
-            <Text style={styles.time}>{item.time}</Text>
+  if (initialLoading) {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#1e0eff" />
+      </SafeAreaView>
+    );
+  }
+
+  if (error && notifications.length === 0) {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center' }}>
+        <Text style={styles.errorText}>{error}</Text>
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
+      <View style={styles.container}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={24} color="#333" />
+        </TouchableOpacity>
+
+        <Text style={styles.heading}>Thông báo</Text>
+
+        <FlatList
+          data={notifications}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id.toString()}
+          contentContainerStyle={styles.list}
+          ListEmptyComponent={<Text style={styles.emptyText}>Không có thông báo nào</Text>}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => fetchNotifications(true)}
+              colors={['#1e0eff']}
+            />
+          }
+        />
+        {error && (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>{error}</Text>
           </View>
-        ))}
-      </ScrollView>
+        )}
+      </View>
     </SafeAreaView>
   );
 };
@@ -127,66 +141,54 @@ const NotificationScreen = () => {
 export default NotificationScreen;
 
 const styles = StyleSheet.create({
-  safeContainer: { flex: 1, backgroundColor: '#fff' },
-  container: {
-    padding: 20,
-    paddingBottom: 30,
-  },
-  header: {
+  container: { padding: 20, flex: 1 },
+  heading: { fontWeight: 'bold', fontSize: 18, marginVertical: 20 },
+  list: { paddingBottom: 20 },
+  notificationItem: {
+    padding: 15,
+    borderBottomWidth: 0.5,
+    borderBottomColor: '#ccc',
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 20,
+    alignItems: 'center',
+  },
+  unread: {
+    backgroundColor: '#f0f5ff', // Màu nền nhẹ cho thông báo chưa đọc
+  },
+  notificationContent: {
+    flex: 1,
   },
   title: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
-    color: '#000',
+    color: '#333',
   },
-  markAll: {
-    color: '#f39c12',
-    fontSize: 13,
-  },
-  card: {
-    flexDirection: 'row',
-    padding: 15,
-    borderRadius: 12,
-    marginBottom: 15,
-    alignItems: 'flex-start',
-    position: 'relative',
-  },
-  logo: {
-    width: 40,
-    height: 40,
-    marginRight: 10,
-    marginTop: 4,
-  },
-  cardTitle: {
-    fontWeight: 'bold',
-    marginBottom: 4,
+  message: {
     fontSize: 14,
+    color: '#666',
+    marginTop: 5,
   },
-  content: {
-    fontSize: 13,
-    marginBottom: 10,
-  },
-  button: {
-    borderColor: '#333',
-    borderWidth: 1,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 20,
-    alignSelf: 'flex-start',
-  },
-  buttonText: {
+  date: {
     fontSize: 12,
-    fontWeight: '500',
+    color: '#999',
+    marginTop: 5,
   },
-  time: {
-    position: 'absolute',
-    right: 15,
-    bottom: 10,
-    fontSize: 11,
-    color: '#888',
+  unreadIndicator: {
+    marginLeft: 10,
+  },
+  emptyText: {
+    textAlign: 'center',
+    color: '#666',
+    marginTop: 20,
+  },
+  errorContainer: {
+    padding: 10,
+    backgroundColor: '#ffe6e6',
+    borderRadius: 5,
+    marginTop: 10,
+  },
+  errorText: {
+    color: '#e15a4f',
+    textAlign: 'center',
   },
 });
