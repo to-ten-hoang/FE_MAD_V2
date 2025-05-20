@@ -29,7 +29,7 @@ const MessageListScreen = () => {
   return (
     <SafeAreaView style={styles.safeContainer}>
       <ScrollView style={styles.container}>
-        <Text style={styles.header}>Tin nhắn</Text>
+        <Text style={styles.header}>Tin nhắn (Đang phát triển)</Text>
         {messages.map(msg => (
           <MessageCard
             key={msg.id}
